@@ -99,7 +99,7 @@ const LAY={2:[0,3],3:[0,2,5],4:[0,2,3,5],5:[0,2,3,4,5],6:[0,1,2,4,5,6],7:[0,1,2,
 const NM=['Carta alta','Pareja','Doble pareja','Trío','Escalera','Color','Full','Póker','Escalera de color'],K=759375;
 const SU=['♠','♥','♦','♣'],RK={11:'J',12:'Q',13:'K',14:'A'};
 const PR=[{i:'♠',s:'#2a6fb0'},{i:'♥',s:'#b3402b'},{i:'♦',s:'#c9a227'},{i:'♣',s:'#2f7a4f'},{i:'👑',s:'#6c3fa0'},{i:'🎩',s:'#333333'},{i:'💎',s:'#1f8aa0'},{i:'🍀',s:'#4a8f3a'}],DL={i:'🃏',s:'#f4f1e8'};
-function svgAv(o){return `<svg class='fig' viewBox='0 0 80 72' aria-hidden='true'><circle cx='40' cy='37' r='30' fill='${o.s}' stroke='rgba(255,255,255,.85)' stroke-width='3'/><text x='40' y='38' font-size='32' text-anchor='middle' dominant-baseline='central' fill='#fff'>${o.i}</text></svg>`}
+let _u=0;function svgAv(o){const g='c'+_u++;return `<svg class='fig' viewBox='0 0 80 72' aria-hidden='true'>`+(o.p?`<clipPath id='${g}'><circle cx='40' cy='37' r='30'/></clipPath><image href='${o.p}' x='10' y='7' width='60' height='60' preserveAspectRatio='xMidYMid slice' clip-path='url(#${g})'/><circle cx='40' cy='37' r='30' fill='none' stroke='rgba(255,255,255,.85)' stroke-width='3'/>`:`<circle cx='40' cy='37' r='30' fill='${o.s}' stroke='rgba(255,255,255,.85)' stroke-width='3'/><text x='40' y='38' font-size='32' text-anchor='middle' dominant-baseline='central' fill='#fff'>${o.i}</text>`)+`</svg>`}
 const DFN=['Fácil','Medio','Difícil'];let CFG={name:'',av:['p0','p1','p2','p3','p4','p5','p6'],df:[1,1,1,1,1,1,1],n:4};
 try{Object.assign(CFG,JSON.parse(localStorage.getItem('cfg')||'{}'))}catch(e){}
 CFG.n=Math.max(2,Math.min(7,+CFG.n||4));
@@ -248,10 +248,10 @@ function menuH(){$('mu').innerHTML=R2().map(i=>'<div class="mr"><button class="g
 const R2=()=>[...Array(CFG.n).keys()];
 let sel=1;
 $('mu').onclick=e=>{const a=e.target.closest('.ab'),d=e.target.closest('.sg button');
- if(a){sel=+a.dataset.i;$('pk').innerHTML=PR.map((o,k)=>'<button class="ghost pb" data-p="'+k+'" aria-label="Personaje '+(k+1)+'">'+svgAv(o)+'</button>').join('');$('pk').hidden=false}
+ if(a){sel=+a.dataset.i;$('pk').innerHTML=PR.map((o,k)=>'<button class="ghost pb" data-p="'+k+'" aria-label="Personaje '+(k+1)+'">'+svgAv(o)+'</button>').join('')+'<button class="ghost" id="gal">📷 Usar foto de la galería como icono</button>';$('pk').hidden=false}
  if(d){CFG.df[+d.parentElement.dataset.i]=+d.dataset.k;saveCfg();menuH()}};
 $('pk').onclick=e=>{const b=e.target.closest('.pb');if(b){CFG.av[sel]='p'+b.dataset.p;saveCfg();$('pk').hidden=true;menuH();render()}if(e.target.closest('#gal'))$('fi').click()};
-$('fi').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=c.height=128;const s=Math.min(im.width,im.height);c.getContext('2d').drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,128,128);CFG.av[sel]=c.toDataURL('image/jpeg',.8);saveCfg();$('pk').hidden=true;menuH();render()};im.src=r.result};r.readAsDataURL(f);e.target.value=''};
+$('fi').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=c.height=96;const s=Math.min(im.width,im.height);c.getContext('2d').drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,96,96);CFG.av[sel]=c.toDataURL('image/jpeg',.7);saveCfg();$('pk').hidden=true;menuH();render()};im.src=r.result};r.readAsDataURL(f);e.target.value=''};
 $('pns').oninput=()=>{CFG.n=clamp($('pns').value,2,7,4);$('pnn').value=CFG.n;menuH()};
 $('pnn').oninput=()=>{CFG.n=clamp($('pnn').value,2,7,4);$('pns').value=CFG.n;menuH()};
 $('bbs').oninput=()=>{$('bbn').value=$('bbs').value;bbT(+$('bbs').value)};
@@ -279,7 +279,7 @@ const loadPeer=()=>window.Peer?Promise.resolve():new Promise((ok,no)=>{const s=d
 function mkA(x,j){const a={send:o=>{try{j?x.send(o):(x.readyState=='open'||x.readyState===1)&&x.send(JSON.stringify(o))}catch(e){}},close:()=>{try{x.close()}catch(e){}}};
  a.on=(f,g)=>{if(j){x.on('data',f);x.on('close',g)}else{x.onmessage=e=>f(JSON.parse(e.data));x.onclose=g}};return a}
 function AV(i){return i==0?CFG.av[0]:MPAV?MPAV[i]:CFG.av[i]}
-function okAv(a){return typeof a=='string'&&/^p[0-7]$/.test(a)?a:null}
+function okAv(a){return typeof a=='string'&&(/^p[0-7]$/.test(a)||(a.length<20000&&/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(a)))?a:null}
 function myName(){const i=$('mn');NET.name=ESC(((i?i.value:CFG.name)||CFG.name||'').trim())||'Jugador';CFG.name=NET.name;NMS[0]=NET.name;saveCfg();return NET.name}
 function mp0(){let n=CFG.name||'';
  mb('<label for="mn">Tu nombre</label><input type="text" id="mn" maxlength="12" placeholder="Jugador" value="'+ESC(n)+'"><button class="ghost" data-m="cust">🎨 Mi icono y nombre</button><button data-m="lan">📶 Wi-Fi local</button><p>Misma red Wi-Fi: el anfitrión comparte la IP de su Wi-Fi y los demás entran con ella.</p><button data-m="net">🌐 Por internet</button><p>Se crea una sala con código de 4 letras y tus amigos entran con él.</p>')}
@@ -314,7 +314,7 @@ function cj(a,x){NET.c=a;a.on(cm,()=>{$('msg').textContent='Se perdió la conexi
  if(!x||x.readyState=='open')hi();else x.onopen=hi;mb('<p>✅ Conectado. Esperando a que el anfitrión empiece…</p><div id="lb"></div>')}
 function cm(m){
  if(m.t=='lob'&&$('lb'))$('lb').innerHTML=m.nm.map((x,i)=>'<p>'+(i+1)+'. '+x+'</p>').join('');
- else if(m.t=='av')MPAV=m.av;
+ else if(m.t=='av'){MPAV=MPAV||[];MPAV[m.i]=m.v}
  else if(m.t=='x')mb('<p>La sala está llena o la partida ya empezó.</p>');
  else if(m.t=='s'){const d=m.d;S.n=d.n;S.stack=d.st;S.dealer=d.dl;BB=d.bb;d.nm.forEach((x,i)=>NMS[i]=x);
   G=Object.assign({},d,{hold:false,hh:false,nh:0,fx:[],fly:[],acted:[]});$('mp').hidden=true;$('home').hidden=true;render()}}
@@ -326,7 +326,7 @@ function ract(s,m){if(!G||G.over||G.to!=s)return;if(G.hold)return setTimeout(()=
 function cl(a){const k=NET.g.findIndex(x=>x.c===a);if(k<0)return;
  if(!NET.st){NET.g.splice(k,1);lobby();return}
  const x=NET.g[k];if(x.bot)return;x.bot=true;NMS[k+1]=x.name+' (bot)';if(G&&G.to==k+1&&!G.over)next();render()}
-function mpStart(){NET.on=NET.st=true;NET.n=NET.g.length+1;NMS[0]=NET.name;MPAV=[CFG.av[0]].concat(NET.g.map((x,i)=>x.av||'p'+((i+1)%8)));NET.g.forEach((x,k)=>x.c.send({t:'av',av:MPAV.map((_,i)=>MPAV[(i+k+1)%MPAV.length])}));NET.g.forEach((x,i)=>NMS[i+1]=x.name);NG=NET.name+' gana ';$('mp').hidden=true;startGame()}
+function mpStart(){NET.on=NET.st=true;NET.n=NET.g.length+1;NMS[0]=NET.name;MPAV=[CFG.av[0]].concat(NET.g.map((x,i)=>x.av||'p'+((i+1)%8)));NET.g.forEach((x,k)=>MPAV.forEach((_,i)=>{if(i!=k+1)x.c.send({t:'av',i:(i-k-1+MPAV.length)%MPAV.length,v:MPAV[i]})}));NET.g.forEach((x,i)=>NMS[i+1]=x.name);NG=NET.name+' gana ';$('mp').hidden=true;startGame()}
 function snap(c){const n=S.n,rt=a=>a.map((_,i)=>a[(i+c)%n]),q=i=>(i-c+n)%n;
  return{n,st:rt(S.stack),dl:q(S.dealer),bb:BB,nm:rt(NMS.slice(0,n)),id:G.id,out:rt(G.out),fold:rt(G.fold),bet:rt(G.bet),tot:rt(G.tot),say:rt(G.say),
   hole:rt(G.hole.map((h,i)=>(i==c||(G.show&&!G.fold[i]&&!G.out[i]))?h:[])),board:G.board,to:G.to<0?-1:q(G.to),over:G.over,show:G.show,msg:G.msg,last:G.last,street:G.street}}
@@ -371,7 +371,7 @@ function snd(k){if(!SND)return;const c=ac();if(!c)return;const t=c.currentTime,E
 addEventListener('pointerdown',()=>ac());
 $('sn').textContent=SND?'🔊':'🔇';$('sn').onclick=()=>{SND=!SND;$('sn').textContent=SND?'🔊':'🔇';try{localStorage.setItem('snd',SND?'1':'0')}catch(e){}if(SND)snd('c')};
 NMS[0]=CFG.name||'Tú';
-CFG.av=CFG.av.map((a,i)=>/^p[0-7]$/.test(a)?a:'p'+(i%8));
+CFG.av=CFG.av.map((a,i)=>(/^p[0-7]$/.test(a)||/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(a))?a:'p'+(i%8));
 let go=null;try{go=sessionStorage.getItem('go');sessionStorage.removeItem('go')}catch(e){}
 if(go)startGame();
 </script></body></html>
